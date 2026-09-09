@@ -43,6 +43,11 @@ Not defterlerini baslatmak icin:
 jupyter lab
 ```
 
+## Not Defterleri
+
+- `notebooks/01_sma_rsi_backtest.ipynb`: Yahoo Finance verisiyle SMA-RSI stratejisini calistirir ve sermaye egrisini cizer.
+- `notebooks/02_qaoa_portfolio_optimization.ipynb`: Ornek getiri ve kovaryans matrisiyle QAOA varlik secimini gosterir.
+
 ## Dizin Yapisi
 
 ```text

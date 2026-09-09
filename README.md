@@ -37,6 +37,47 @@ result = run_long_only_backtest(prices["close"], signals["position"])
 print(result.metrics)
 ```
 
+ATR tabanli kaymayi gercekci maliyet modeline eklemek icin ``high`` ve ``low``
+serilerini de verin. Kayma, her pozisyon degisiminde ``ATR / close`` ile
+orantilidir:
+
+```python
+result = run_long_only_backtest(
+    prices["close"],
+    signals["position"],
+    high=prices["high"],
+    low=prices["low"],
+    slippage_atr_multiplier=0.10,
+)
+```
+
+## Walk-Forward Dogrulama
+
+``run_sma_rsi_walk_forward`` aday parametreleri sadece egitim penceresinde
+degerlendirir, ardindan sonraki out-of-sample pencerede test eder. Gunluk veri
+icin 6 ay/2 ay yaklasimi yaklasik ``126`` ve ``42`` gozleme karsilik gelir.
+
+```python
+from backtest.walk_forward import WalkForwardConfig, run_sma_rsi_walk_forward
+from strategies.trend_following import SmaRsiConfig
+
+result = run_sma_rsi_walk_forward(
+    prices["close"],
+    [SmaRsiConfig(10, 30), SmaRsiConfig(20, 50)],
+    WalkForwardConfig(train_periods=126, test_periods=42),
+)
+print(result.selections)
+```
+
+## QAOA Benchmark
+
+QAOA katman sayisi ile COBYLA/SPSA optimize edicilerini ayni problemde
+karsilastirmak icin:
+
+```bash
+python scripts/benchmark_qaoa.py --reps 1 2 3 --optimizers COBYLA SPSA --maxiter 50
+```
+
 Not defterlerini baslatmak icin:
 
 ```bash

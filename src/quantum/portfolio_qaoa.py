@@ -9,6 +9,9 @@ import numpy as np
 import pandas as pd
 
 
+SUPPORTED_OPTIMIZERS = frozenset({"COBYLA", "SPSA"})
+
+
 class QiskitDependencyError(ImportError):
     """Kuantum calisma zamani paketleri kurulu olmadiginda yukseltilir."""
 
@@ -21,6 +24,7 @@ class QAOAPortfolioConfig:
     risk_aversion: float = 0.5
     reps: int = 2
     maxiter: int = 100
+    optimizer: str = "COBYLA"
     seed: int | None = 123
 
     def __post_init__(self) -> None:
@@ -32,6 +36,13 @@ class QAOAPortfolioConfig:
             raise ValueError("reps must be a positive integer")
         if not isinstance(self.maxiter, int) or self.maxiter <= 0:
             raise ValueError("maxiter must be a positive integer")
+        if not isinstance(self.optimizer, str):
+            raise ValueError("optimizer must be a string")
+        normalized_optimizer = self.optimizer.upper()
+        if normalized_optimizer not in SUPPORTED_OPTIMIZERS:
+            supported = ", ".join(sorted(SUPPORTED_OPTIMIZERS))
+            raise ValueError(f"optimizer must be one of: {supported}")
+        object.__setattr__(self, "optimizer", normalized_optimizer)
 
 
 @dataclass(frozen=True)
@@ -99,7 +110,6 @@ def solve_qaoa_portfolio(
 
     try:
         from qiskit_algorithms import QAOA
-        from qiskit_algorithms.optimizers import COBYLA
         from qiskit_algorithms.utils import algorithm_globals
         from qiskit_optimization.algorithms import MinimumEigenOptimizer
     except ImportError as error:  # pragma: no cover - dependency boundary
@@ -108,8 +118,8 @@ def solve_qaoa_portfolio(
     if settings.seed is not None:
         algorithm_globals.random_seed = settings.seed
     qaoa = QAOA(
-        sampler=_create_sampler(),
-        optimizer=COBYLA(maxiter=settings.maxiter),
+        sampler=_create_sampler(settings.seed),
+        optimizer=_create_optimizer(settings.optimizer, settings.maxiter),
         reps=settings.reps,
     )
     result = MinimumEigenOptimizer(qaoa).solve(problem)
@@ -136,7 +146,19 @@ def _quadratic_program_class() -> Any:
     return QuadraticProgram
 
 
-def _create_sampler() -> Any:
+def _create_optimizer(name: str, maxiter: int) -> Any:
+    try:
+        from qiskit_algorithms.optimizers import COBYLA, SPSA
+    except ImportError as error:  # pragma: no cover - dependency boundary
+        raise QiskitDependencyError("qiskit-algorithms is required for QAOA optimizers") from error
+    if name == "COBYLA":
+        return COBYLA(maxiter=maxiter)
+    if name == "SPSA":
+        return SPSA(maxiter=maxiter)
+    raise ValueError(f"Unsupported optimizer: {name}")
+
+
+def _create_sampler(seed: int | None) -> Any:
     """Qiskit 1.x ve sonraki ilkel API'leriyle uyumlu bir sampler uretir."""
     try:
         from qiskit.primitives import StatevectorSampler
@@ -146,7 +168,7 @@ def _create_sampler() -> Any:
         except ImportError as error:  # pragma: no cover - dependency boundary
             raise QiskitDependencyError("A Qiskit sampler primitive is required") from error
         return Sampler()
-    return StatevectorSampler(default_shots=1024)
+    return StatevectorSampler(default_shots=1024, seed=seed)
 
 
 def _validate_inputs(

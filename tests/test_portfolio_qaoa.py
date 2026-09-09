@@ -10,6 +10,17 @@ def test_config_rejects_budget_larger_than_problem_later() -> None:
     assert config.budget == 3
 
 
+def test_config_normalizes_supported_optimizer_name() -> None:
+    config = QAOAPortfolioConfig(optimizer="spsa")
+
+    assert config.optimizer == "SPSA"
+
+
+def test_config_rejects_unknown_optimizer() -> None:
+    with pytest.raises(ValueError, match="optimizer"):
+        QAOAPortfolioConfig(optimizer="nelder-mead")
+
+
 def test_problem_has_binary_assets_and_budget_constraint() -> None:
     pytest.importorskip("qiskit_optimization")
     expected_returns = pd.Series({"AAA": 0.10, "BBB": 0.08, "CCC": 0.05})

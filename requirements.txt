@@ -1,0 +1,16 @@
+# Finans ve Veri Analitiği
+pandas>=2.0.0
+numpy>=1.24.0
+scipy>=1.10.0
+yfinance>=0.2.30
+vectorbt>=0.25.0
+matplotlib>=3.7.0
+
+# Kuantum Hesaplama
+qiskit>=1.0.0
+qiskit-optimization>=0.6.0
+qiskit-algorithms>=0.3.0
+
+# Araştırma ortamı ve test
+jupyterlab>=4.0.0
+pytest>=8.0.0

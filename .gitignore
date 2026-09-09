@@ -5,6 +5,7 @@ __pycache__/
 venv/
 .venv/
 .pytest_cache/
+pytest-cache-files-*/
 .coverage
 .ipynb_checkpoints/
 data/*.csv
